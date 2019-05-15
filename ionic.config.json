@@ -1,5 +1,7 @@
 {
   "name": "rentals-project",
-  "integrations": {},
+  "integrations": {
+    "capacitor": {}
+  },
   "type": "angular"
 }

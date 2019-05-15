@@ -1,0 +1,7 @@
+{
+  "appId": "com.udemy.rentals.project",
+  "appName": "rentals-project",
+  "bundledWebRuntime": false,
+  "npmClient": "npm",
+  "webDir": "www"
+}
