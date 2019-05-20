@@ -1,0 +1,15 @@
+<ion-item>
+  <ion-thumbnail slot="start">
+    <ion-img [src]="offer.imageUrl"></ion-img>
+  </ion-thumbnail>
+  <ion-label>
+    <h1>{{ offer.title }}</h1>
+    <div class="offer-details">
+      <ion-icon name="calendar" color="secondary"></ion-icon>
+      <ion-text color="tertiary" class="space-left"> {{ getDummyDate() | date : 'dd/MM/yy' }}</ion-text>
+      <span class="space-left">to</span>
+      <ion-icon name="calendar" color="secondary" class="space-left"></ion-icon>
+      <ion-text color="tertiary" class="space-left"> {{ getDummyDate() | date : 'dd/MM/yy' }}</ion-text>
+    </div>
+  </ion-label>
+</ion-item>

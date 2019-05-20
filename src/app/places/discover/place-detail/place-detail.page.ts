@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { NavController, ModalController } from '@ionic/angular';
+import { NavController, ModalController, ActionSheetController } from '@ionic/angular';
 
 import { Place } from '../../place.model';
 import { PlacesService } from '../../places.service';
@@ -17,7 +17,8 @@ export class PlaceDetailPage implements OnInit {
   constructor(private navCtrl: NavController,
               private placesService: PlacesService,
               private route: ActivatedRoute,
-              private modalController: ModalController) {
+              private modalController: ModalController,
+              private actionSheetController: ActionSheetController) {
   }
 
   ngOnInit() {
@@ -37,9 +38,36 @@ export class PlaceDetailPage implements OnInit {
     // this.navCtrl.navigateBack('/places/tabs/discover');
     // this.navCtrl.pop();
     // create modal Controller gives us a promise which we can use present to show, like the alert controller
+    this.actionSheetController.create({
+      header: 'Choose an Action',
+      buttons: [
+        {
+          text: 'Select Date',
+          handler: () => {
+            this.openBookingModal('select');
+          }
+        },
+        {
+          text: 'Random Date',
+          handler: () => {
+            this.openBookingModal('random');
+          }
+        },
+        {
+          text: 'Cancel',
+          role: 'cancel'
+        }
+      ]
+    }).then(actionSheetEl => {
+      actionSheetEl.present();
+    });
+  }
+  // TS type assignment - 'mode' has to be either strings 'select' or 'random'
+  openBookingModal(mode: 'select' | 'random') {
+    console.log(mode);
     this.modalController.create({
       component: CreateBookingComponent,
-      componentProps: {selectedPlace: this.place}
+      componentProps: {selectedPlace: this.place, selectedMode: mode}
     })
       .then(modalEl => {
         modalEl.present();
