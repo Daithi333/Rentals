@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { take, map } from 'rxjs/operators';
+import { take, map, tap, delay } from 'rxjs/operators';
 
 import { Place } from './place.model';
 import { AuthService } from '../auth/auth.service';
@@ -84,8 +84,34 @@ export class PlacesService {
     // instead of pushing to array, now the data is stored in BehaviourSubject,
     // so use next to emit new event which ios array of places + new
     // take - look at places subject, suscribe to it, only take 1 object and then cancel the subscription
-    this.places.pipe(take(1)).subscribe(places => {
-      this._places.next(places.concat(newPlace));
-    });
+    // return added so the new offer page's loading controller would know when the task was completed
+    // tap() allows access to without completing / consuming the observable
+    return this.places.pipe(
+      take(1),
+      delay(1000),
+      tap(places => {
+        this._places.next(places.concat(newPlace));
+      })
+    );
+  }
+
+  updatePlace(placeId: string, title: string, description: string) {
+    // return observable so in edit-offer page we can see when operation is completed
+    return this.places.pipe(take(1), delay(1000), tap(places => {
+      const updatedPlaceIndex = places.findIndex(pl => pl.id === placeId);
+      const updatedPlaces = [...places];
+      const oldPlace = updatedPlaces[updatedPlaceIndex];
+      updatedPlaces[updatedPlaceIndex] = new Place(
+        oldPlace.id,
+        title,
+        description,
+        oldPlace.imageUrl,
+        oldPlace.price,
+        oldPlace.availableFrom,
+        oldPlace.availableTo,
+        oldPlace.userId
+      );
+      this._places.next(updatedPlaces);
+    }));
   }
 }
