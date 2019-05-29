@@ -72,7 +72,7 @@ export class PlacesService {
 
   getPlace(id: string) {
     return this.http
-    .get(
+    .get<PlaceData>(
       `https://udemy-rentals-app.firebaseio.com/offered-places/${id}.json`
     )
     .pipe(
