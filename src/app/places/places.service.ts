@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
-import { take, map, tap, delay, switchMap } from 'rxjs/operators';
+import { BehaviorSubject, of } from 'rxjs';
+import { take, map, tap, switchMap } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 
 import { Place } from './place.model';
@@ -59,13 +59,34 @@ export class PlacesService {
         })
       );
   }
+  // could use another method to fetch from server only whenplace data is not available locally
+  // getPlace(id: string) {
+  //   // return {...this._places.find(p => p.id === id)};
+  //   return this.places.pipe(
+  //     take(1),
+  //     map(places => {
+  //       return {...places.find(p => p.id === id) };
+  //     })
+  //   );
+  // }
 
   getPlace(id: string) {
-    // return {...this._places.find(p => p.id === id)};
-    return this.places.pipe(
-      take(1),
-      map(places => {
-        return {...places.find(p => p.id === id) };
+    return this.http
+    .get(
+      `https://udemy-rentals-app.firebaseio.com/offered-places/${id}.json`
+    )
+    .pipe(
+      map(placeData => {
+        return new Place(
+          id,
+          placeData.title,
+          placeData.description,
+          placeData.imageUrl,
+          placeData.price,
+          new Date(placeData.availableFrom),
+          new Date(placeData.availableTo),
+          placeData.userId
+        );
       })
     );
   }
@@ -124,22 +145,55 @@ export class PlacesService {
   }
 
   updatePlace(placeId: string, title: string, description: string) {
+    let updatedPlaces: Place[];
+    return this.places.pipe(
+      take(1), 
+      switchMap(places => {
+        if (!places || places.length <= 0) {
+          return this.fetchPlaces();
+        } else {
+          return of(places); // of creates an observable of the object it was called on. (switchMap needs to return one)
+        }
+      }),
+      switchMap(places => {
+        const updatedPlaceIndex = places.findIndex(pl => pl.id === placeId);
+        updatedPlaces = [...places];
+        const oldPlace = updatedPlaces[updatedPlaceIndex];
+        updatedPlaces[updatedPlaceIndex] = new Place(
+          oldPlace.id,
+          title,
+          description,
+          oldPlace.imageUrl,
+          oldPlace.price,
+          oldPlace.availableFrom,
+          oldPlace.availableTo,
+          oldPlace.userId
+        );
+        return this.http.put(
+          `https://udemy-rentals-app.firebaseio.com/offered-places/${placeId}.json`,
+          { ...updatedPlaces[updatedPlaceIndex], id: null }
+        );
+      }),
+      tap(() => {
+        this._places.next(updatedPlaces);
+      })
+    );
     // return observable so in edit-offer page we can see when operation is completed
-    return this.places.pipe(take(1), delay(1000), tap(places => {
-      const updatedPlaceIndex = places.findIndex(pl => pl.id === placeId);
-      const updatedPlaces = [...places];
-      const oldPlace = updatedPlaces[updatedPlaceIndex];
-      updatedPlaces[updatedPlaceIndex] = new Place(
-        oldPlace.id,
-        title,
-        description,
-        oldPlace.imageUrl,
-        oldPlace.price,
-        oldPlace.availableFrom,
-        oldPlace.availableTo,
-        oldPlace.userId
-      );
-      this._places.next(updatedPlaces);
-    }));
+    // return this.places.pipe(take(1), delay(1000), tap(places => {
+    //   const updatedPlaceIndex = places.findIndex(pl => pl.id === placeId);
+    //   const updatedPlaces = [...places];
+    //   const oldPlace = updatedPlaces[updatedPlaceIndex];
+    //   updatedPlaces[updatedPlaceIndex] = new Place(
+    //     oldPlace.id,
+    //     title,
+    //     description,
+    //     oldPlace.imageUrl,
+    //     oldPlace.price,
+    //     oldPlace.availableFrom,
+    //     oldPlace.availableTo,
+    //     oldPlace.userId
+    //   );
+    //   this._places.next(updatedPlaces);
+    // }));
   }
 }
