@@ -13,6 +13,7 @@ import { Place } from '../place.model';
 export class OffersPage implements OnInit, OnDestroy {
   @ViewChild('slidingItem') slidingItem: IonItemSliding;
   offers: Place[];
+  isLoading = false;
   private placesSub: Subscription;
 
   constructor(private placesService: PlacesService) { }
@@ -21,6 +22,13 @@ export class OffersPage implements OnInit, OnDestroy {
     // this.offers = this.placesService.places;
     this.placesSub = this.placesService.places.subscribe( places => {
       this.offers = places;
+    });
+  }
+
+  ionViewWillEnter() {
+    this.isLoading = true;
+    this.placesService.fetchPlaces().subscribe(() => {
+      this.isLoading = false;
     });
   }
 

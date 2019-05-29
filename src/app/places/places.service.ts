@@ -1,56 +1,63 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { take, map, tap, delay } from 'rxjs/operators';
+import { take, map, tap, delay, switchMap } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
 
 import { Place } from './place.model';
 import { AuthService } from '../auth/auth.service';
 
+interface PlaceData {
+  availableFrom: string;
+  availableTo: string;
+  description: string;
+  imageUrl: string;
+  price: number;
+  title: string;
+  userId: string;
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class PlacesService {
-  private _places = new BehaviorSubject<Place[]>(
-    [
-      new Place(
-        'p1',
-        'Manhattan Loft',
-        'In the heart of New York City!',
-        'https://mymodernmet.com/wp/wp-content/uploads/archive/82vIX0Z3jh0RiK97NAZ-_1082072560.jpeg',
-        300.00,
-        new Date ('2019-01-01'),
-        new Date ('2025-12-31'),
-        'abc'
-      ),
-      new Place(
-        'p2',
-        'Amour Toujours',
-        'Rustic French cottage in romantic rural village setting',
-        'https://www.phgmag.com/wp-content/uploads/2018/06/PHG0718Art5_Pavalonis01.jpg',
-        190,
-        new Date ('2019-01-01'),
-        new Date ('2025-12-31'),
-        'xyz'
-      ),
-      new Place(
-        'p3',
-        'Beachfront Villa',
-        'Beautiful modern, secluded villa overlooking private beach',
-        'https://d3e7bfg0h5jt4g.mrandmrssmith.com/images/1482x988/3620374-mia-resort-five-bedroom-beachfront-villa-nha-trang-vietnam.jpg',
-        150,
-        new Date ('2019-01-01'),
-        new Date ('2025-12-31'),
-        'ghi'
-      ),
-  ]
-  );
+  private _places = new BehaviorSubject<Place[]>([]);
 
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService, private http: HttpClient) {}
 
   get places() {
     // return [...this._places];
-    // gettable places returns a suscribible Subject (subscription only, cannot be used to view new events)
+    // gettable places returns a subscribable Subject (subscription only, cannot be used to view new events)
     return this._places.asObservable();
+  }
+
+  fetchPlaces() {
+    return this.http
+      .get<{[key: string]: PlaceData }>('https://udemy-rentals-app.firebaseio.com/offered-places.json')
+      .pipe(
+        map(resData => {
+          const places = [];
+          for (const key in resData) {
+            if (resData.hasOwnProperty(key)) {
+              places.push(
+                new Place(
+                  key,
+                  resData[key].title,
+                  resData[key].description,
+                  resData[key].imageUrl,
+                  resData[key].price,
+                  new Date(resData[key].availableFrom),
+                  new Date(resData[key].availableTo),
+                  resData[key].userId
+                )
+              );
+            }
+          }
+          return places;
+        }),
+        tap(places => {
+          this._places.next(places);
+        })
+      );
   }
 
   getPlace(id: string) {
@@ -70,6 +77,7 @@ export class PlacesService {
     dateFrom: Date,
     dateTo: Date
   ) {
+    let generatedId: string;
     const newPlace = new Place(
       Math.random().toString(),
       title,
@@ -80,19 +88,39 @@ export class PlacesService {
       dateTo,
       this.authService.userId
     );
+    return this.http
+      .post<{name: string}>('https://udemy-rentals-app.firebaseio.com/offered-places.json', {
+        ...newPlace,
+        id: null
+      })
+      // .pipe(tap(responseData => {
+      //   console.log(responseData);
+      // }));
+      .pipe(
+        switchMap(responseData => {
+          generatedId = responseData.name;
+          return this.places;
+        }),
+        take(1),
+        tap(places => {
+          newPlace.id = generatedId;
+          this._places.next(places.concat(newPlace));
+        })
+      );
+
     // this._places.push(newPlace);
     // instead of pushing to array, now the data is stored in BehaviourSubject,
-    // so use next to emit new event which ios array of places + new
-    // take - look at places subject, suscribe to it, only take 1 object and then cancel the subscription
+    // so use next to emit new event which is array of places + new
+    // take - look at places subject, subscribe to it, only take 1 object and then cancel the subscription
     // return added so the new offer page's loading controller would know when the task was completed
     // tap() allows access to without completing / consuming the observable
-    return this.places.pipe(
-      take(1),
-      delay(1000),
-      tap(places => {
-        this._places.next(places.concat(newPlace));
-      })
-    );
+    // return this.places.pipe(
+    //   take(1),
+    //   delay(1000),
+    //   tap(places => {
+    //     this._places.next(places.concat(newPlace));
+    //   })
+    // );
   }
 
   updatePlace(placeId: string, title: string, description: string) {
