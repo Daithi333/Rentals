@@ -8,6 +8,7 @@ import { PlacesService } from '../../places.service';
 import { CreateBookingComponent } from '../../../bookings/create-booking/create-booking.component';
 import { BookingService } from '../../../bookings/booking.service';
 import { AuthService } from '../../../auth/auth.service';
+import { MapModalComponent } from '../../../shared/map-modal/map-modal.component';
 
 
 @Component({
@@ -131,6 +132,23 @@ export class PlaceDetailPage implements OnInit, OnDestroy {
               });
             });
         }
+      });
+  }
+
+  onShowFullMap() {
+    this.modalController
+    .create({
+      component: MapModalComponent,
+      componentProps: {
+        center: { lat: this.place.location.lat, lng: this.place.location.lng },
+        selectable: false,
+        closeButtonText: 'Close',
+        title: this.place.location.address,
+        zoom: 15
+      }
+    })
+      .then(modalEl => {
+        modalEl.present();
       });
   }
 
