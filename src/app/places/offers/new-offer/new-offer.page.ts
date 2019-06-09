@@ -80,7 +80,7 @@ export class NewOfferPage implements OnInit {
     if (typeof imageData === 'string') {
       try {
         imageFile = base64toBlob(
-          imageData.replace('data:image/jpeg;base64', ''),
+          imageData.replace('data:image/jpeg;base64,', ''),
           'image/jpeg'
         );
       } catch (error) {
