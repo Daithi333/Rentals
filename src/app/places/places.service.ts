@@ -95,20 +95,31 @@ export class PlacesService {
     );
   }
 
+  uploadImage(image: File) {
+    const uploadData = new FormData();
+    uploadData.append('image', image);
+
+    return this.http.post<{imageUrl: string, imagePath: string}>(
+      'https://us-central1-udemy-rentals-app.cloudfunctions.net/storeImage', 
+      uploadData
+    );
+  }
+
   addPlace(
     title: string,
     description: string,
     price: number,
     dateFrom: Date,
     dateTo: Date,
-    location: PlaceLocation
+    location: PlaceLocation,
+    imageUrl: string
   ) {
     let generatedId: string;
     const newPlace = new Place(
       Math.random().toString(),
       title,
       description,
-      'https://www.squareyards.com/blog/wp-content/uploads/2015/06/Holiday-Home.png',
+      imageUrl,
       price,
       dateFrom,
       dateTo,
