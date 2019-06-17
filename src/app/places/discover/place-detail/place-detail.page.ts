@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NavController, ModalController, ActionSheetController, LoadingController, AlertController } from '@ionic/angular';
 import { Subscription } from 'rxjs';
+import { switchMap, take } from 'rxjs/operators';
 
 import { Place } from '../../place.model';
 import { PlacesService } from '../../places.service';
@@ -9,7 +10,6 @@ import { CreateBookingComponent } from '../../../bookings/create-booking/create-
 import { BookingService } from '../../../bookings/booking.service';
 import { AuthService } from '../../../auth/auth.service';
 import { MapModalComponent } from '../../../shared/map-modal/map-modal.component';
-import { switchMap } from 'rxjs/operators';
 
 
 @Component({
@@ -45,6 +45,7 @@ export class PlaceDetailPage implements OnInit, OnDestroy {
       this.isLoading = true;
       let fetchedUserId: string;
       this.authService.userId.pipe(
+        take(1),
         switchMap(userId => {
           if (!userId) {
             throw new Error('no user Found!');
