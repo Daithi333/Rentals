@@ -9,6 +9,7 @@ import { CreateBookingComponent } from '../../../bookings/create-booking/create-
 import { BookingService } from '../../../bookings/booking.service';
 import { AuthService } from '../../../auth/auth.service';
 import { MapModalComponent } from '../../../shared/map-modal/map-modal.component';
+import { switchMap } from 'rxjs/operators';
 
 
 @Component({
@@ -42,12 +43,20 @@ export class PlaceDetailPage implements OnInit, OnDestroy {
         return;
       }
       this.isLoading = true;
-      // this.place = this.placesService.getPlace(paramMap.get('placeId'));
-      this.placeSub = this.placesService.getPlace(paramMap.get('placeId'))
-        .subscribe(place => {
-          this.place = place;
-          this.isBookable = place.userId !== this.authService.userId;
-          this.isLoading = false;
+      let fetchedUserId: string;
+      this.authService.userId.pipe(
+        switchMap(userId => {
+          if (!userId) {
+            throw new Error('no user Found!');
+          }
+          fetchedUserId = userId;
+          return this.placesService.getPlace(paramMap.get('placeId'));
+        })
+      )
+      .subscribe(place => {
+        this.place = place;
+        this.isBookable = place.userId !== fetchedUserId;
+        this.isLoading = false;
         }, error => {
           this.alertController.create({
             header: 'An error occurred!',

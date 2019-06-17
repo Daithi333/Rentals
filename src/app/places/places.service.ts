@@ -115,36 +115,39 @@ export class PlacesService {
     imageUrl: string
   ) {
     let generatedId: string;
-    const newPlace = new Place(
-      Math.random().toString(),
-      title,
-      description,
-      imageUrl,
-      price,
-      dateFrom,
-      dateTo,
-      this.authService.userId,
-      location
-    );
-    return this.http
-      .post<{name: string}>('https://udemy-rentals-app.firebaseio.com/offered-places.json', {
-        ...newPlace,
-        id: null
+    let newPlace: Place;
+    return this.authService.userId.pipe(
+      take(1),
+      switchMap(userId => {
+        if (!userId) {
+          throw new Error('no user Found!');
+        }
+        newPlace = new Place(
+          Math.random().toString(),
+          title,
+          description,
+          imageUrl,
+          price,
+          dateFrom,
+          dateTo,
+          userId,
+          location
+        );
+        return this.http.post<{name: string}>(
+          'https://udemy-rentals-app.firebaseio.com/offered-places.json',
+          { ...newPlace, id: null }
+        );
+      }),
+      switchMap(responseData => {
+        generatedId = responseData.name;
+        return this.places;
+      }),
+      take(1),
+      tap(places => {
+        newPlace.id = generatedId;
+        this._places.next(places.concat(newPlace));
       })
-      // .pipe(tap(responseData => {
-      //   console.log(responseData);
-      // }));
-      .pipe(
-        switchMap(responseData => {
-          generatedId = responseData.name;
-          return this.places;
-        }),
-        take(1),
-        tap(places => {
-          newPlace.id = generatedId;
-          this._places.next(places.concat(newPlace));
-        })
-      );
+    );
 
     // this._places.push(newPlace);
     // instead of pushing to array, now the data is stored in BehaviourSubject,

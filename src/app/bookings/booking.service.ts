@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { take, map, delay, tap, switchMap } from 'rxjs/operators';
+import { take, map, tap, switchMap } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 
 import { Booking } from './booking.model';
@@ -24,10 +24,7 @@ interface BookingData {
 export class BookingService {
   private _bookings = new BehaviorSubject<Booking[]>([]);
 
-  constructor(
-    private authService: AuthService,
-    private http: HttpClient
-  ) {}
+  constructor(private authService: AuthService, private http: HttpClient) {}
 
   get bookings() {
     return this._bookings.asObservable();
@@ -53,27 +50,33 @@ export class BookingService {
     dateTo: Date
   ) {
     let generatedId: string;
-    const newBooking = new Booking(
-      Math.random().toString(),
-      placeId,
-      this.authService.userId,
-      placeTitle,
-      placeImage,
-      firstName,
-      lastName,
-      guestNumber,
-      dateFrom,
-      dateTo
-    );
-    return this.http.post<{name: string}>(
-      'https://udemy-rentals-app.firebaseio.com/bookings.json',
-      {...newBooking, id: null }
-    )
-    .pipe(
+    let newBooking: Booking;
+    return this.authService.userId.pipe(
+      take(1),
+      switchMap(userId => {
+        if (!userId) {
+          throw new Error('User not found!');
+        }
+        newBooking = new Booking(
+          Math.random().toString(),
+          placeId,
+          userId,
+          placeTitle,
+          placeImage,
+          firstName,
+          lastName,
+          guestNumber,
+          dateFrom,
+          dateTo
+        );
+        return this.http.post<{name: string}>(
+          'https://udemy-rentals-app.firebaseio.com/bookings.json',
+          {...newBooking, id: null }
+        );
+      }),
       switchMap(resData => {
-      generatedId = resData.name;
-      console.log(resData);
-      return this.bookings;
+        generatedId = resData.name;
+        return this.bookings;
       }),
       take(1),
       tap(bookings => {
@@ -96,26 +99,28 @@ export class BookingService {
     )
     .pipe(
       switchMap(() => {
-      return this.bookings;
+        return this.bookings;
       }),
       take(1),
       tap(bookings => {
         this._bookings.next(bookings.filter(b => b.id !== bookingId));
       })
     );
-    // return this.bookings.pipe(
-    //   take(1),
-    //   delay(1000),
-    //   tap(bookings => {
-    //     this._bookings.next(bookings.filter(b => b.id !== bookingId));
-    //   })
-    // );
+
   }
+
   // orderBy is feature specific to Firebase
   fetchBookings() {
-    return this.http.get<{ [key: string]: BookingData }>(
-      `https://udemy-rentals-app.firebaseio.com/bookings.json?orderBy="userId"&equalTo="${this.authService.userId}"`
-    ).pipe(
+    return this.authService.userId.pipe(
+      take(1),
+      switchMap(userId => {
+        if (!userId) {
+          throw new Error('User not found');
+        }
+        return this.http.get<{ [key: string]: BookingData }>(
+          `https://udemy-rentals-app.firebaseio.com/bookings.json?orderBy="userId"&equalTo="${userId}"`
+        );
+      }),
       map(bookingData => {
         const bookings = [];
         for (const key in bookingData) {

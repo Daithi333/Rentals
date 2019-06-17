@@ -46,7 +46,6 @@ export class BookingsPage implements OnInit, OnDestroy {
           loadingEl.dismiss();
         });
     });
-    
   }
 
   ngOnDestroy() {
