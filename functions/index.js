@@ -13,7 +13,9 @@ const storage = new Storage({
   projectId: 'udemy-rentals-app'
 });
 
-fbAdmin.initializeApp({credential: fbAdmin.credential.cert(require('./rentals-app.json'))});
+fbAdmin.initializeApp({
+  credential: fbAdmin.credential.cert(require('./rentals-app.json'))
+});
 
 exports.storeImage = functions.https.onRequest((req, res) => {
   return cors(req, res, () => {
@@ -21,12 +23,12 @@ exports.storeImage = functions.https.onRequest((req, res) => {
       return res.status(500).json({ message: 'Not allowed.' });
     }
 
-    let idToken;
-    idToken = req.headers.authorization.split('Bearer')[1];
-
-    if (!req.headers.authorization || !req.headers.authorization.startsWith('Bearer')) {
+    if (!req.headers.authorization || !req.headers.authorization.startsWith('Bearer ')) {
       return res.status(401).json({error: 'Unauthorized!'});
     }
+
+    let idToken;
+    idToken = req.headers.authorization.split('Bearer ')[1];
 
     const busboy = new Busboy({ headers: req.headers });
     let uploadData;
