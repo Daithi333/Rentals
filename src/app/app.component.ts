@@ -38,7 +38,7 @@ export class AppComponent implements OnInit, OnDestroy {
       }
       this.previousAuthState = isAuth;
     });
-    Plugins.App.addListener('appStateChange', this.checkAuthOnResume.bind(this));
+    // Plugins.App.addListener('appStateChange', this.checkAuthOnResume.bind(this));
   }
 
   onLogout() {
@@ -51,17 +51,17 @@ export class AppComponent implements OnInit, OnDestroy {
     }
   }
 
-  private checkAuthOnResume(state: AppState) {
-    if (state.isActive) {
-      this.authService
-        .autoLogin()
-        .pipe(take(1))
-        .subscribe(success => {
-          if (!success) {
-            this.onLogout();
-          }
-        });
-    }
-  }
+  // private checkAuthOnResume(state: AppState) {
+  //   if (state.isActive) {
+  //     this.authService
+  //       .autoLogin()
+  //       .pipe(take(1))
+  //       .subscribe(success => {
+  //         if (!success) {
+  //           this.onLogout();
+  //         }
+  //       });
+  //   }
+  // }
 
 }
