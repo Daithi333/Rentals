@@ -32,9 +32,9 @@ export class AuthPage implements OnInit {
         loadingEl.present();
         let authObs: Observable<AuthResponseData>;
         if (this.isLogin) {
-          authObs =  this.authService.login(email, password);
+          authObs = this.authService.login(email, password);
         } else {
-          this.authService.signup(email, password);
+          authObs = this.authService.signup(email, password);
         }
         authObs.subscribe(resData => {
           console.log(resData);
